@@ -16,13 +16,24 @@ export default async function handler(req, res) {
         .from('test_data')
         .insert([{ name }]);
 
-      if (error) throw error;
+      if (error) {
+        // Log the error in the console for debugging
+        console.error("Supabase insert error:", error);
+        throw error;  // Throw the error to be caught by the catch block
+      }
 
+      // Return a success response
       res.status(200).json({ message: 'Data inserted successfully', data });
     } catch (error) {
-      res.status(500).json({ error: 'Error inserting data into Supabase', details: error.message });
+      // Log the detailed error message
+      console.error("DBG 1 Error inserting data:", error.message);
+      res.status(500).json({
+        error: 'DBG 2 Error inserting data into Supabase',
+        details: error.message,
+      });
     }
   } else {
+    // Handle unsupported methods
     res.status(405).json({ error: 'Method Not Allowed' });
   }
 }

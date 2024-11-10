@@ -1,45 +1,92 @@
-import { useState } from 'react';
+// pages/radar/index.js
 
-export default function Home() {
-  const [name, setName] = useState('');
-  const [message, setMessage] = useState('');
+import { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import Link from 'next/link';
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setMessage('');
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
-    const response = await fetch('/api/write-data', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name }),
-    });
+export default function RadarDashboard() {
+  const [radars, setRadars] = useState([]);
+  const [newRadar, setNewRadar] = useState({ name: '', description: '' });
 
-    const result = await response.json();
-    if (response.ok) {
-      setMessage(result.message);
-    } else {
-      setMessage(`Error: ${result.error}`);
+  useEffect(() => {
+    fetchRadars();
+  }, []);
+
+  // Fetch all radars from Supabase
+  async function fetchRadars() {
+    const { data, error } = await supabase.from('radars').select('*');
+    if (error) console.error("Error fetching radars:", error.message);
+    else setRadars(data);
+  }
+
+  // Create a new radar entry
+  async function handleCreateRadar() {
+    const { data, error } = await supabase
+      .from('radars')
+      .insert([{ name: newRadar.name, description: newRadar.description }]);
+    if (error) console.error("Error creating radar:", error.message);
+    else {
+      setNewRadar({ name: '', description: '' });
+      fetchRadars(); // Refresh the list after creating a radar
     }
+  }
 
-    setName('');
-  };
+  // Delete a radar with confirmation
+  async function handleDeleteRadar(id, name) {
+    if (confirm(`Are you sure you want to delete the radar "${name}"?`)) {
+      const { error } = await supabase.from('radars').delete().eq('id', id);
+      if (error) console.error("Error deleting radar:", error.message);
+      else fetchRadars(); // Refresh the list after deletion
+    }
+  }
 
   return (
     <div>
-      <h1>Supabase Data Insertion</h1>
-      <form onSubmit={handleSubmit}>
+      <h1>Radar Dashboard</h1>
+
+      {/* Form to create a new radar */}
+      <div>
+        <h2>Create New Radar</h2>
         <input
           type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Enter name"
-          required
+          placeholder="Radar Name"
+          value={newRadar.name}
+          onChange={(e) => setNewRadar({ ...newRadar, name: e.target.value })}
         />
-        <button type="submit">Submit</button>
-      </form>
-      {message && <p>{message}</p>}
+        <textarea
+          placeholder="Radar Description"
+          value={newRadar.description}
+          onChange={(e) =>
+            setNewRadar({ ...newRadar, description: e.target.value })
+          }
+        />
+        <button onClick={handleCreateRadar}>Create Radar</button>
+      </div>
+
+      {/* List of existing radars */}
+      <h2>Existing Radars</h2>
+      <ul>
+        {radars.map((radar) => (
+          <li key={radar.id}>
+            <strong>{radar.name}</strong> - {radar.description}
+            <br />
+            Last updated: {new Date(radar.updated_at).toLocaleString()}
+            <br />
+            <Link href={`/radar/${radar.id}`}>
+              View Radar Items
+            </Link>
+            <button onClick={() => handleDeleteRadar(radar.id, radar.name)}>
+              Delete
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
