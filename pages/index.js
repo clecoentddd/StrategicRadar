@@ -1,8 +1,8 @@
-export default function RadarDashboard() {
+export default function HomePage() {
   return (
     <div>
-      <h1>Radar Dashboard</h1>
-      <p>This is a test page for the Radar Dashboard. If you see this, the page is loading correctly.</p>
+      <h1>Welcome to the Home Page</h1>
+      <p>This is a simplified test to ensure the page loads.</p>
     </div>
   );
 }
