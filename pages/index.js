@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -13,6 +14,7 @@ const supabase = createClient(
 export default function RadarDashboard() {
   const [radars, setRadars] = useState([]);
   const [newRadar, setNewRadar] = useState({ name: '', description: '' });
+  const router = useRouter();
 
   useEffect(() => {
     console.log("RadarDashboard component mounted, fetching radars...");
@@ -52,6 +54,12 @@ export default function RadarDashboard() {
     }
   }
 
+  // Handle navigation to the strategy page
+  const navigateToStrategy = (radarName) => {
+    const encodedRadarName = encodeURIComponent(radarName);
+    router.push(`/strategy/${encodedRadarName}`);
+  };
+
   return (
     <div>
       <h1>Radar Dashboard</h1>
@@ -84,11 +92,14 @@ export default function RadarDashboard() {
             <br />
             Last updated: {new Date(radar.updated_at).toLocaleString()}
             <br />
-            <Link href={`/radar/${radar.id}`}>
-              View Radar Items
+            <Link href={`/radar/${radar.id}`} legacyBehavior>
+              <a>View Radar Items</a>
             </Link>
             <button onClick={() => handleDeleteRadar(radar.id, radar.name)}>
               Delete
+            </button>
+            <button onClick={() => navigateToStrategy(radar.name)}>
+              Go to Strategy - {radar.name}
             </button>
           </li>
         ))}
