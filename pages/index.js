@@ -15,14 +15,20 @@ export default function RadarDashboard() {
   const [newRadar, setNewRadar] = useState({ name: '', description: '' });
 
   useEffect(() => {
+    console.log("RadarDashboard component mounted, fetching radars...");
     fetchRadars();
   }, []);
 
   // Fetch all radars from Supabase
   async function fetchRadars() {
+    console.log("Fetching radars...");
     const { data, error } = await supabase.from('radars').select('*');
-    if (error) console.error("Error fetching radars:", error.message);
-    else setRadars(data);
+    if (error) {
+      console.error("Error fetching radars:", error.message);
+    } else {
+      console.log("Fetched radars data:", data);
+      setRadars(data);
+    }
   }
 
   // Create a new radar entry
