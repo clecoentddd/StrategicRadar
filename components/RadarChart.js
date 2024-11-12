@@ -53,34 +53,80 @@ const RadarChart = ({ items, radius = 200 }) => {
       dist4: radius * 0.25,
     };
 
+    // Function to set color based on impact
+    const getColorByImpact = (impact) => {
+      switch (impact) {
+        case 'low':
+          return 'green';
+        case 'medium':
+          return 'orange';
+        case 'high':
+          return 'red';
+        default:
+          return 'steelblue';
+      }
+    };
+
+    // Function to set size based on cost
+    const getSizeByCost = (cost) => {
+      switch (cost) {
+        case 'low':
+          return 7; // 70% of default size (10)
+        case 'medium':
+          return 10; // Default size
+        case 'high':
+          return 15; // 150% of default size
+        default:
+          return 10;
+      }
+    };
+
     // Position items in each category quadrant based on distance
     Object.entries(groupedItems).forEach(([key, items]) => {
       const [category, distance] = key.split('-');
       const angleOffset = (Math.PI / 2) * (parseInt(category.replace('cat', '')) - 1);
       const distRadius = distanceToRadius[distance] || radius;
 
-      // Calculate equal-angle spacing for items at same distance
+      // Calculate equal-angle spacing for items at the same distance
       const angleStep = (Math.PI / 2) / (items.length + 1);
       items.forEach((item, index) => {
         const angle = angleOffset + angleStep * (index + 1);
         const x = distRadius * Math.cos(angle);
         const y = distRadius * Math.sin(angle);
 
-        // Draw item circle
-        svg.append('circle')
+        // Set color, size, and glow effect based on item properties
+        const color = getColorByImpact(item.impact);
+        const size = getSizeByCost(item.cost);
+
+        // Append group for each item to manage glow effect if type is "opportunity"
+        const itemGroup = svg.append('g');
+
+        if (item.type === 'opportunity') {
+          // Apply glow effect for opportunities
+          itemGroup.append('circle')
+            .attr('cx', x)
+            .attr('cy', y)
+            .attr('r', size + 5) // Slightly larger circle for glow
+            .attr('fill', color)
+            .attr('opacity', 0.3);
+        }
+
+        // Draw main item circle
+        itemGroup.append('circle')
           .attr('cx', x)
           .attr('cy', y)
-          .attr('r', 10)
-          .attr('fill', 'steelblue')
+          .attr('r', size)
+          .attr('fill', color)
           .attr('stroke', 'white')
           .attr('stroke-width', 2);
 
         // Draw item name
         svg.append('text')
           .attr('x', x)
-          .attr('y', y - 15)
+          .attr('y', y - size - 5)
           .attr('text-anchor', 'middle')
           .attr('font-size', '10px')
+          .attr('fill', '#333')
           .text(item.name);
       });
     });
