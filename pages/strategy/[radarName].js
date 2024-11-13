@@ -25,62 +25,86 @@ export default function StrategyPage() {
   });
   const [availableTags, setAvailableTags] = useState([]);
   const [editElementId, setEditElementId] = useState(null);
-  const [radarId, setRadarId] = useState(null);  // Added radarId state to track the radar id
+  const [radarId, setRadarId] = useState(null);
 
-  useEffect(() => {
-    if (radarName) {
-      fetchRadarId();
-      fetchStrategicElements();
-      fetchRadarItems();
-    }
-  }, [radarName]);
+// Update useEffect to refetch radar items when radarId changes
+useEffect(() => {
+  if (radarName) {
+    fetchRadarId();  // fetchRadarId will set radarId
+  }
+}, [radarName]);
 
-  // Fetch radar ID based on radarName
+// Fetch radar items after radarId is set
+useEffect(() => {
+  if (radarId) {
+    fetchStrategicElements();  // Fetch elements for the specific radar
+    fetchRadarItems();         // Fetch tags specific to this radar
+  }
+}, [radarId]);
+
   async function fetchRadarId() {
     const { data, error } = await supabase
       .from('radars')
       .select('id')
       .eq('name', radarName)
-      .single();  // Assuming the radar name is unique, we get a single entry
+      .single();
     if (error) {
       console.error('Error fetching radar ID:', error.message);
     } else {
-      setRadarId(data.id);  // Set radarId to the fetched value
+      setRadarId(data.id);
     }
   }
 
-  // Fetch strategic elements for the radar
   async function fetchStrategicElements() {
     if (radarId) {
       const { data, error } = await supabase
         .from('strategic_elements')
         .select('*')
-        .eq('radar_id', radarId);  // Now using radarId for filtering
+        .eq('radar_id', radarId);
       if (error) {
         console.error('Error fetching strategic elements:', error.message);
       } else {
-        setStrategicElements(data);
+        setStrategicElements(
+          data.map((element) => ({
+            ...element,
+            tags: Array.isArray(element.tags)
+              ? element.tags
+              : typeof element.tags === 'string'
+              ? element.tags.split(',')
+              : [],  // Ensure tags is always an array
+          }))
+        );
       }
     }
   }
-
-  // Fetch radar items to populate tags
-  async function fetchRadarItems() {
+ 
+  
+// Fetch radar items to populate tags
+async function fetchRadarItems() {
+  if (radarId) {  // Check if radarId is set before making the query
     const { data, error } = await supabase
       .from('radar_items')
-      .select('name');
+      .select('name')
+      .eq('radar_id', radarId);  // Filter items by radarId
+
     if (error) {
       console.error('Error fetching radar items:', error.message);
     } else {
-      setAvailableTags(data.map(item => item.name));
+      setAvailableTags(data.map(item => item.name));  // Set tags for the current radar only
     }
   }
+}
 
-  // Add a new strategic element
   async function handleCreateElement() {
     const { data, error } = await supabase
       .from('strategic_elements')
-      .insert([{ ...newElement, radar_id: radarId }]);
+      .insert([{
+        ...newElement,
+        radar_id: radarId,
+        tags: Array.isArray(newElement.tags) ? newElement.tags.join(',') : '', // Convert tags to string
+        fromYear: newElement.fromYear ? parseInt(newElement.fromYear, 10) : null,
+        toYear: newElement.toYear ? parseInt(newElement.toYear, 10) : null
+      }]);
     if (error) {
       console.error('Error creating element:', error.message);
     } else {
@@ -98,12 +122,16 @@ export default function StrategyPage() {
       fetchStrategicElements();
     }
   }
-
-  // Update an existing strategic element
+  
   async function handleUpdateElement() {
     const { error } = await supabase
       .from('strategic_elements')
-      .update({ ...newElement })
+      .update({
+        ...newElement,
+        tags: Array.isArray(newElement.tags) ? newElement.tags.join(',') : '', // Convert tags to string
+        fromYear: newElement.fromYear ? parseInt(newElement.fromYear, 10) : null,
+        toYear: newElement.toYear ? parseInt(newElement.toYear, 10) : null
+      })
       .eq('id', editElementId);
     if (error) {
       console.error('Error updating element:', error.message);
@@ -123,8 +151,7 @@ export default function StrategyPage() {
       fetchStrategicElements();
     }
   }
-
-  // Set element in edit mode
+  
   const handleEditElement = (element) => {
     setEditElementId(element.id);
     setNewElement({
@@ -136,15 +163,20 @@ export default function StrategyPage() {
       status: element.status,
       fromYear: element.fromYear,
       toYear: element.toYear,
-      tags: element.tags || [],
+      tags: Array.isArray(element.tags)
+        ? element.tags
+        : typeof element.tags === 'string'
+        ? element.tags.split(',')
+        : [],  // Ensure tags is always an array
     });
   };
+  
+  
+  
 
-  // Handle tag selection
-  const handleTagChange = (selectedTag) => {
-    if (!newElement.tags.includes(selectedTag)) {
-      setNewElement({ ...newElement, tags: [...newElement.tags, selectedTag] });
-    }
+  const handleTagChange = (selectedOptions) => {
+    const selectedTags = Array.from(selectedOptions).map(option => option.value);
+    setNewElement({ ...newElement, tags: selectedTags });
   };
 
   return (
@@ -164,25 +196,25 @@ export default function StrategyPage() {
             placeholder="Diagnosis"
             value={newElement.diagnosis}
             onChange={(e) => setNewElement({ ...newElement, diagnosis: e.target.value })}
-            style={{ flex: 1, padding: '1rem', fontStyle: 'italic', color: newElement.diagnosis ? 'black' : 'grey' }}
+            style={{ flex: 1, padding: '1rem' }}
           />
           <textarea
             placeholder="Overall Approach"
             value={newElement.overall_approach}
             onChange={(e) => setNewElement({ ...newElement, overall_approach: e.target.value })}
-            style={{ flex: 1, padding: '1rem', fontStyle: 'italic', color: newElement.overall_approach ? 'black' : 'grey' }}
+            style={{ flex: 1, padding: '1rem' }}
           />
           <textarea
             placeholder="Set of Coherent Actions"
             value={newElement.set_of_coherent_actions}
             onChange={(e) => setNewElement({ ...newElement, set_of_coherent_actions: e.target.value })}
-            style={{ flex: 1, padding: '1rem', fontStyle: 'italic', color: newElement.set_of_coherent_actions ? 'black' : 'grey' }}
+            style={{ flex: 1, padding: '1rem' }}
           />
           <textarea
             placeholder="Proximate Objectives"
             value={newElement.proximate_objectives}
             onChange={(e) => setNewElement({ ...newElement, proximate_objectives: e.target.value })}
-            style={{ flex: 1, padding: '1rem', fontStyle: 'italic', color: newElement.proximate_objectives ? 'black' : 'grey' }}
+            style={{ flex: 1, padding: '1rem' }}
           />
         </div>
         <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
@@ -198,22 +230,29 @@ export default function StrategyPage() {
           <input
             type="number"
             placeholder="From Year"
-            value={newElement.fromYear}
-            onChange={(e) => setNewElement({ ...newElement, fromYear: e.target.value })}
+            value={newElement.fromYear || ''}
+            onChange={(e) => setNewElement({ ...newElement, fromYear: e.target.value ? parseInt(e.target.value, 10) : '' })}
             style={{ width: '100px' }}
           />
           <input
             type="number"
             placeholder="To Year"
-            value={newElement.toYear}
-            onChange={(e) => setNewElement({ ...newElement, toYear: e.target.value })}
+            value={newElement.toYear || ''}
+            onChange={(e) => setNewElement({ ...newElement, toYear: e.target.value ? parseInt(e.target.value, 10) : '' })}
             style={{ width: '100px' }}
           />
           <div>
-            <select onChange={(e) => handleTagChange(e.target.value)}>
-              <option>Select tag...</option>
+            <select 
+              multiple
+              value={newElement.tags} 
+              onChange={(e) => handleTagChange(e.target.selectedOptions)}
+              style={{ width: '100%', minHeight: '100px' }}
+            >
+              <option value="">Select tags...</option>
               {availableTags.map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
               ))}
             </select>
             <div style={{ marginTop: '0.5rem' }}>
@@ -239,7 +278,7 @@ export default function StrategyPage() {
             <p><strong>Overall Approach:</strong> {element.overall_approach}</p>
             <p><strong>Set of Coherent Actions:</strong> {element.set_of_coherent_actions}</p>
             <p><strong>Proximate Objectives:</strong> {element.proximate_objectives}</p>
-            <p><strong>Tags:</strong> {element.tags ? element.tags.join(', ') : 'None'}</p>
+            <p><strong>Tags:</strong> {Array.isArray(element.tags) ? element.tags.join(', ') : 'None'}</p>
             <p><strong>From:</strong> {element.fromYear} <strong>To:</strong> {element.toYear}</p>
             <button onClick={() => handleEditElement(element)}>Edit</button>
           </div>
