@@ -1,5 +1,120 @@
-/* pages/radar/[id].module.css */
+.radarContainer {
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
 .title {
-  color: #199c68;
-  font-size: 2em;
+  font-size: 24px;
+  color: #333;
+  text-align: center;
+}
+
+.toggleButton,
+.submitButton {
+  display: inline-block;
+  margin: 10px 0;
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.toggleButton:hover,
+.submitButton:hover {
+  background-color: #0056b3;
+}
+
+.sectionHeading {
+  margin-top: 20px;
+  font-size: 20px;
+  color: #555;
+}
+
+.formGroup {
+  display: grid;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.inputField,
+.textareaField,
+.selectField {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.textareaField {
+  height: 80px;
+  resize: vertical;
+}
+
+.itemList {
+  list-style: none;
+  padding: 0;
+}
+
+.item {
+  background: white;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.itemButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.editButton,
+.deleteButton {
+  padding: 5px 10px;
+  font-size: 14px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.editButton {
+  background-color: #ffc107;
+  color: #fff;
+}
+
+.deleteButton {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.editButton:hover {
+  background-color: #e0a800;
+}
+
+.deleteButton:hover {
+  background-color: #c82333;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: 20px;
+  font-size: 16px;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+  color: #0056b3;
 }

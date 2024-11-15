@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 import RadarChart from '../../components/RadarChart';
+import Link from 'next/link'; // Import Link from Next.js
 import styles from './[id].module.css'; // Import your CSS module
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -168,93 +169,113 @@ export default function RadarPage() {
   };
 
   return (
-    <div>
+    <div className={styles.radarContainer}>
+      <Link href="/" className={styles.backLink}>
+        Back to Radar List
+      </Link>
+
       <h1 className={styles.title}>Radar: {radarName}</h1>
 
-      <button onClick={() => setShowRadar(!showRadar)}>
+      <button className={styles.toggleButton} onClick={() => setShowRadar(!showRadar)}>
         {showRadar ? "Hide Radar" : "Display Radar"}
       </button>
 
       {showRadar && <RadarChart items={items} radius={200} />}
 
-      <h2>{editingItem ? "Edit Radar Item" : "Add New Radar Item"}</h2>
+      <h2 className={styles.sectionHeading}>
+        {editingItem ? "Edit Radar Item" : "Add New Radar Item"}
+      </h2>
 
-      <input
-        type="text"
-        placeholder="Name"
-        value={newItem.name || ""}
-        onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-      />
-      <textarea
-        placeholder="Description"
-        value={newItem.description || ""}
-        onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-      />
-      <select
-        value={newItem.type || ""}
-        onChange={(e) => setNewItem({ ...newItem, type: e.target.value })}
-      >
-        <option value="problem">Problem</option>
-        <option value="opportunity">Opportunity</option>
-      </select>
-      <select
-        value={newItem.category || ""}
-        onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-      >
-        <option value="cat1">Cat1</option>
-        <option value="cat2">Cat2</option>
-        <option value="cat3">Cat3</option>
-        <option value="cat4">Cat4</option>
-      </select>
-      <select
-        value={newItem.impact || ""}
-        onChange={(e) => setNewItem({ ...newItem, impact: e.target.value })}
-      >
-        <option value="low">Low</option>
-        <option value="medium">Medium</option>
-        <option value="high">High</option>
-      </select>
-      <select
-        value={newItem.cost || ""}
-        onChange={(e) => setNewItem({ ...newItem, cost: e.target.value })}
-      >
-        <option value="low">Low</option>
-        <option value="medium">Medium</option>
-        <option value="high">High</option>
-      </select>
-      <select
-        value={newItem.distance || ""}
-        onChange={(e) => setNewItem({ ...newItem, distance: e.target.value })}
-      >
-        <option value="dist1">Dist1</option>
-        <option value="dist2">Dist2</option>
-        <option value="dist3">Dist3</option>
-        <option value="dist4">Dist4</option>
-      </select>
-      {/* Zoom In selection */}
-      <select
-        value={newItem.zoom_in || ""}
-        onChange={(e) => setNewItem({ ...newItem, zoom_in: e.target.value })}
-      >
-        <option value="">Select a Radar</option>
-        {radars.map((radar) => (
-          <option key={radar.id} value={radar.id}>
-            {radar.name}
-          </option>
-        ))}
-      </select>
+      <div className={styles.formGroup}>
+        <input
+          className={styles.inputField}
+          type="text"
+          placeholder="Name"
+          value={newItem.name || ""}
+          onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+        />
+        <textarea
+          className={styles.textareaField}
+          placeholder="Description"
+          value={newItem.description || ""}
+          onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+        />
+        <select
+          className={styles.selectField}
+          value={newItem.type || ""}
+          onChange={(e) => setNewItem({ ...newItem, type: e.target.value })}
+        >
+          <option value="problem">Problem</option>
+          <option value="opportunity">Opportunity</option>
+        </select>
+        <select
+          className={styles.selectField}
+          value={newItem.category || ""}
+          onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+        >
+          <option value="cat1">Cat1</option>
+          <option value="cat2">Cat2</option>
+          <option value="cat3">Cat3</option>
+          <option value="cat4">Cat4</option>
+        </select>
+        <select
+          className={styles.selectField}
+          value={newItem.impact || ""}
+          onChange={(e) => setNewItem({ ...newItem, impact: e.target.value })}
+        >
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+        <select
+          className={styles.selectField}
+          value={newItem.cost || ""}
+          onChange={(e) => setNewItem({ ...newItem, cost: e.target.value })}
+        >
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+        <select
+          className={styles.selectField}
+          value={newItem.distance || ""}
+          onChange={(e) => setNewItem({ ...newItem, distance: e.target.value })}
+        >
+          <option value="dist1">Dist1</option>
+          <option value="dist2">Dist2</option>
+          <option value="dist3">Dist3</option>
+          <option value="dist4">Dist4</option>
+        </select>
+        <select
+          className={styles.selectField}
+          value={newItem.zoom_in || ""}
+          onChange={(e) => setNewItem({ ...newItem, zoom_in: e.target.value })}
+        >
+          <option value="">Select a Radar</option>
+          {radars.map((radar) => (
+            <option key={radar.id} value={radar.id}>
+              {radar.name}
+            </option>
+          ))}
+        </select>
+        <button
+          className={styles.submitButton}
+          onClick={editingItem ? handleUpdateItem : handleAddItem}
+        >
+          {editingItem ? "Update Item" : "Add Item"}
+        </button>
+      </div>
 
-      <button onClick={editingItem ? handleUpdateItem : handleAddItem}>
-        {editingItem ? "Update Item" : "Add Item"}
-      </button>
-
-      <h2>Radar Items For</h2>
-      <ul>
+      <h2 className={styles.sectionHeading}>Radar Items For</h2>
+      <ul className={styles.itemList}>
         {items.map((item) => (
-          <li key={item.id}>
-            <strong>{item.name}</strong>: {item.description} - {item.category} | {item.distance}
-            {/* Zoom In field for each item */}
+          <li className={styles.item} key={item.id}>
+            <div>
+              <strong>{item.name}</strong>: {item.description} - {item.category} |{" "}
+              {item.distance}
+            </div>
             <select
+              className={styles.selectField}
               value={item.zoom_in || ""}
               onChange={(e) => {
                 const updatedItem = { ...item, zoom_in: e.target.value };
@@ -268,8 +289,20 @@ export default function RadarPage() {
                 </option>
               ))}
             </select>
-            <button onClick={() => handleEditClick(item)}>Edit</button>
-            <button onClick={() => handleDeleteItem(item.id)}>Delete</button>
+            <div className={styles.itemButtons}>
+              <button
+                className={styles.editButton}
+                onClick={() => handleEditClick(item)}
+              >
+                Edit
+              </button>
+              <button
+                className={styles.deleteButton}
+                onClick={() => handleDeleteItem(item.id)}
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
