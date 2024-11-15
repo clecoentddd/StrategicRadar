@@ -36,19 +36,27 @@ export default function RadarPage() {
   }, [id]);
 
   // Fetch the current radar details
-  async function fetchRadar() {
+// Fetch the current radar details
+async function fetchRadar() {
+  try {
+    // Fetch the radar data
     const { data, error } = await supabase
       .from('radars')
       .select('name')
       .eq('id', id)
-      .single();
+      .single();  // Fetch a single record
 
     if (error) {
       console.error("Error fetching radar:", error.message);
     } else {
+      console.log("Radar fetched:", data);  // Debugging log
       setRadarName(data.name);
     }
+  } catch (error) {
+    console.error("Unexpected error:", error);
   }
+}
+
 
   // Fetch all radar items for the current radar
   async function fetchItems() {

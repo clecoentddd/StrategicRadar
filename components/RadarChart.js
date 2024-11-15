@@ -1,12 +1,19 @@
-// components/RadarChart.js - adding color
-
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import { useRouter } from 'next/router'; // For navigation
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 const RadarChart = ({ items, radius = 200 }) => {
   const svgRef = useRef();
+  const router = useRouter(); // Next.js router for navigation
 
   useEffect(() => {
+    console.log("Rendering RadarChart...");
+    console.log("Items: ", items);
+
     // Clear previous SVG content
     d3.select(svgRef.current).selectAll('*').remove();
 
@@ -45,6 +52,8 @@ const RadarChart = ({ items, radius = 200 }) => {
       return acc;
     }, {});
 
+    console.log("Grouped Items: ", groupedItems);
+
     // Map distance to radius
     const distanceToRadius = {
       dist1: radius,
@@ -53,39 +62,13 @@ const RadarChart = ({ items, radius = 200 }) => {
       dist4: radius * 0.25,
     };
 
-    // Function to set color based on impact
-    const getColorByImpact = (impact) => {
-      switch (impact) {
-        case 'low':
-          return 'green';
-        case 'medium':
-          return 'orange';
-        case 'high':
-          return 'red';
-        default:
-          return 'steelblue';
-      }
-    };
-
-    // Function to set size based on cost
-    const getSizeByCost = (cost) => {
-      switch (cost) {
-        case 'low':
-          return 7; // 70% of default size (10)
-        case 'medium':
-          return 10; // Default size
-        case 'high':
-          return 15; // 150% of default size
-        default:
-          return 10;
-      }
-    };
-
     // Position items in each category quadrant based on distance
     Object.entries(groupedItems).forEach(([key, items]) => {
       const [category, distance] = key.split('-');
       const angleOffset = (Math.PI / 2) * (parseInt(category.replace('cat', '')) - 1);
       const distRadius = distanceToRadius[distance] || radius;
+
+      console.log(`Category: ${category}, Distance: ${distance}, Radius: ${distRadius}`);
 
       // Calculate equal-angle spacing for items at the same distance
       const angleStep = (Math.PI / 2) / (items.length + 1);
@@ -94,24 +77,58 @@ const RadarChart = ({ items, radius = 200 }) => {
         const x = distRadius * Math.cos(angle);
         const y = distRadius * Math.sin(angle);
 
-        // Set color, size, and glow effect based on item properties
+        console.log(`Item: ${item.name}, Position: (${x}, ${y}), Impact: ${item.impact}, Cost: ${item.cost}`);
+
         const color = getColorByImpact(item.impact);
         const size = getSizeByCost(item.cost);
 
-        // Append group for each item to manage glow effect if type is "opportunity"
-        const itemGroup = svg.append('g');
+        // Append group for each item
+        const itemGroup = svg.append('g')
+          .on('mouseover', async function () {
+            console.log(`Mouse over: ${item.name}, zoom_in id: ${item.zoom_in}`);
 
-        if (item.type === 'opportunity') {
-          // Apply glow effect for opportunities
-          itemGroup.append('circle')
-            .attr('cx', x)
-            .attr('cy', y)
-            .attr('r', size + 5) // Slightly larger circle for glow
-            .attr('fill', color)
-            .attr('opacity', 0.3);
-        }
+            d3.select(this).select('circle').attr('stroke', 'black').attr('stroke-width', 3);
 
-        // Draw main item circle
+            // Fetch the radar name based on zoom_in
+            let tooltipText = `<strong>${item.name}</strong><br/>Impact: ${item.impact}<br/>Cost: ${item.cost}`;
+
+            if (item.zoom_in) {
+              const radar = await fetchRadarName(item.zoom_in);
+              tooltipText += `<br/>Zoom in into radar: <a href='/radar/${item.zoom_in}' target='_blank' style='color: blue;'>${radar}</a>`;
+            } else {
+              tooltipText += `<br/>Zoom In Not Selected`;
+            }
+
+            // Display tooltip with item data
+            const tooltip = d3.select('.tooltip');
+            tooltip.style('visibility', 'visible')
+              .html(tooltipText)
+              .style('pointer-events', 'auto'); // Ensure the link is clickable
+          })
+          .on('mouseout', function () {
+            console.log(`Mouse out: ${item.name}`);
+            d3.select(this).select('circle').attr('stroke', 'white').attr('stroke-width', 2);
+
+            // Hide tooltip
+            d3.select('.tooltip').style('visibility', 'hidden');
+          })
+          .on('click', () => {
+            console.log("Navigating to radar item with id:", item.id); // Log the id
+            if (item.id) {
+              setTimeout(() => {
+                console.log("After navigation: id", item.id);
+            }, 10);
+              console.log("Before navigation: id", item.id); // Log before navigation
+              setTimeout(() => {
+                router.push(`/radar/${item.id}`);
+                console.log("After navigation: id", item.id); // This might not be reached as expected
+              }, 0); // Delay to allow logs before navigation
+            } else {
+              console.error("Item ID is missing");
+            }
+          }); // Single-click event to navigate
+
+        // Draw item circle
         itemGroup.append('circle')
           .attr('cx', x)
           .attr('cy', y)
@@ -121,7 +138,7 @@ const RadarChart = ({ items, radius = 200 }) => {
           .attr('stroke-width', 2);
 
         // Draw item name
-        svg.append('text')
+        itemGroup.append('text')
           .attr('x', x)
           .attr('y', y - size - 5)
           .attr('text-anchor', 'middle')
@@ -130,9 +147,77 @@ const RadarChart = ({ items, radius = 200 }) => {
           .text(item.name);
       });
     });
-  }, [items, radius]);
+  }, [items, radius, router]);
 
-  return <svg ref={svgRef}></svg>;
+  // Function to fetch radar name by zoom_in
+  const fetchRadarName = async (zoom_in) => {
+    console.log(`Fetching radar name for zoom_in: ${zoom_in}`);
+    try {
+      const { data, error } = await supabase
+        .from('radars')
+        .select('name')
+        .eq('id', zoom_in)
+        .single();
+
+      if (error) {
+        console.error("Error fetching radar name:", error.message);
+        return 'Error fetching radar';
+      }
+
+      console.log("Radar name found: ", data?.name);
+      return data?.name || 'No name available';
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      return 'Error fetching radar';
+    }
+  };
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <svg ref={svgRef}></svg>
+      <div className="tooltip" style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        background: 'white',
+        border: '1px solid #ccc',
+        padding: '5px',
+        fontSize: '12px',
+        pointerEvents: 'none', // Ensure the tooltip is not blocking interaction
+        visibility: 'hidden',
+        zIndex: 10, // Ensure tooltip appears above other elements
+      }}></div>
+    </div>
+  );
+};
+
+// Helper functions for impact and cost
+const getColorByImpact = (impact) => {
+  console.log(`Getting color for impact: ${impact}`);
+  switch (impact) {
+    case 'low':
+      return 'green';
+    case 'medium':
+      return 'orange';
+    case 'high':
+      return 'red';
+    default:
+      return 'steelblue';
+  }
+};
+
+const getSizeByCost = (cost) => {
+  console.log(`Getting size for cost: ${cost}`);
+  switch (cost) {
+    case 'low':
+      return 7;
+    case 'medium':
+      return 10;
+    case 'high':
+      return 15;
+    default:
+      return 10;
+  }
 };
 
 export default RadarChart;
