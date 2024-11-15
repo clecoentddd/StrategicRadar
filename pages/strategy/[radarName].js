@@ -225,7 +225,7 @@ export default function StrategyPage() {
             <option value="obsolete">Obsolete</option>
             <option value="deleted">Deleted</option>
           </select>
-            <input
+          <input
               type="number"
               placeholder="From Year"
               value={newElement.fromYear || ''}
@@ -240,6 +240,7 @@ export default function StrategyPage() {
               onChange={(e) => setNewElement({ ...newElement, toYear: e.target.value ? parseInt(e.target.value, 10) : '' })}
               className={`${styles.inputField} ${styles.numberInput}`}
             />
+
 
         </div>
         <div className={styles.formGroup}>
