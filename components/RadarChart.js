@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { useRouter } from 'next/router'; // For navigation
 import { createClient } from '@supabase/supabase-js';
+import styles from './RadarChart.module.css'; // Import the CSS Module (or use a global CSS file)
 
 // Initialize Supabase client
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -9,6 +10,13 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.
 const RadarChart = ({ items, radius = 200 }) => {
   const svgRef = useRef();
   const router = useRouter(); // Next.js router for navigation
+
+  // State to manage tooltip data
+  const [tooltipData, setTooltipData] = useState({
+    text: "Zoom over to see details for each risk", // Default tooltip text
+    xPos: radius + radius + 100,  // Fixed position
+    yPos: radius + 0,            // Adjust vertical position
+  });
 
   useEffect(() => {
     console.log("Rendering RadarChart...");
@@ -36,12 +44,13 @@ const RadarChart = ({ items, radius = 200 }) => {
         .attr("stroke", "#ccc");
     }
 
-    // Draw concentric circles for distances
+    // Draw concentric circles (light blue for radar grid)
     [0.25, 0.5, 0.75, 1].forEach(d => {
       svg.append("circle")
         .attr("r", radius * d)
         .attr("fill", "none")
-        .attr("stroke", "#ddd");
+        .attr("stroke", "lightblue") // Light blue for radar grid circles
+        .attr("stroke-width", 1);
     });
 
     // Group items by category and distance
@@ -90,7 +99,7 @@ const RadarChart = ({ items, radius = 200 }) => {
             d3.select(this).select('circle').attr('stroke', 'black').attr('stroke-width', 3);
 
             // Fetch the radar name based on zoom_in
-            let tooltipText = `<strong>${item.name}</strong><br/>Impact: ${item.impact}<br/>Cost: ${item.cost}`;
+            let tooltipText = `<strong>${item.name}</strong><br/>Description: ${item.description}</strong><br/>Impact: ${item.impact}<br/>Cost: ${item.cost}`;
 
             if (item.zoom_in) {
               const radar = await fetchRadarName(item.zoom_in);
@@ -99,35 +108,21 @@ const RadarChart = ({ items, radius = 200 }) => {
               tooltipText += `<br/>Zoom In Not Selected`;
             }
 
-            // Display tooltip with item data
-            const tooltip = d3.select('.tooltip');
-            tooltip.style('visibility', 'visible')
-              .html(tooltipText)
-              .style('pointer-events', 'auto'); // Ensure the link is clickable
+            // Update the tooltip data (fixed position for the tooltip)
+            setTooltipData({
+              xPos: radius + radius + 100,  // Fixed to the right of the circle
+              yPos: radius + 0,       // Adjust the position relative to the circle
+              text: tooltipText
+            });
           })
           .on('mouseout', function () {
             console.log(`Mouse out: ${item.name}`);
             d3.select(this).select('circle').attr('stroke', 'white').attr('stroke-width', 2);
 
-            // Hide tooltip
-            d3.select('.tooltip').style('visibility', 'hidden');
+            // Clear tooltip data on mouseout
+            // setTooltipData(null);
           })
-          .on('click', () => {
-            console.log("Navigating to radar item with id:", item.id); // Log the id
-            if (item.id) {
-              setTimeout(() => {
-                console.log("After navigation: id", item.id);
-            }, 10);
-              console.log("Before navigation: id", item.id); // Log before navigation
-              setTimeout(() => {
-                router.push(`/radar/${item.id}`);
-                console.log("After navigation: id", item.id); // This might not be reached as expected
-              }, 0); // Delay to allow logs before navigation
-            } else {
-              console.error("Item ID is missing");
-            }
-          }); // Single-click event to navigate
-
+          
         // Draw item circle
         itemGroup.append('circle')
           .attr('cx', x)
@@ -172,21 +167,34 @@ const RadarChart = ({ items, radius = 200 }) => {
     }
   };
 
+  // Function to display tooltip
+  const renderTooltip = () => {
+    if (!tooltipData) return null;
+
+    const { text, xPos, yPos } = tooltipData;
+
+    return (
+      <div className={styles.tooltip} style={{
+        position: 'absolute',
+        top: `${yPos - 30}px`, // Adjust tooltip position relative to the circle (above it)
+        left: `${xPos + 15}px`, // Position the tooltip to the right of the circle
+        visibility: tooltipData ? 'visible' : 'hidden',
+        maxWidth: '200px', // Limit tooltip width to fit in the grey area
+        padding: '10px',
+        backgroundColor: 'white',
+        border: '1px solid #ccc',
+        borderRadius: '5px',
+        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)'
+      }}>
+        <div dangerouslySetInnerHTML={{ __html: text }} />
+      </div>
+    );
+  };
+
   return (
     <div style={{ position: 'relative' }}>
       <svg ref={svgRef}></svg>
-      <div className="tooltip" style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        background: 'white',
-        border: '1px solid #ccc',
-        padding: '5px',
-        fontSize: '12px',
-        pointerEvents: 'none', // Ensure the tooltip is not blocking interaction
-        visibility: 'hidden',
-        zIndex: 10, // Ensure tooltip appears above other elements
-      }}></div>
+      {renderTooltip()}
     </div>
   );
 };

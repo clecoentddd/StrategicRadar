@@ -118,3 +118,34 @@
   text-decoration: underline;
   color: #0056b3;
 }
+
+.zoomButtonWrapper {
+  margin-left: auto; /* Push the "Zoom In" button to the right */
+  margin-right: 10px; /* Add space between "Zoom In" and "Edit" */
+}
+
+.zoomInButton {
+  padding: 10px 15px; /* Button padding */
+  font-size: 14px; /* Font size */
+  border: none; /* Remove border */
+  border-radius: 5px; /* Rounded corners */
+  cursor: pointer; /* Show pointer cursor for clickable buttons */
+  text-align: center; /* Center-align text */
+  transition: background-color 0.3s ease; /* Smooth hover effect */
+}
+
+.zoomInButton.enabled {
+  background-color: #007bff; /* Blue background for enabled button */
+  color: white; /* White text */
+}
+
+.zoomInButton.enabled:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+.zoomInButton.disabled {
+  background-color: #d3d3d3; /* Gray background for disabled button */
+  color: #a9a9a9; /* Light gray text */
+  cursor: not-allowed; /* Change cursor to not-allowed for disabled buttons */
+}
+

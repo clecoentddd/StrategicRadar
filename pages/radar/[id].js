@@ -25,7 +25,7 @@ export default function RadarPage() {
     zoom_in: null, // For the zoom in field (initially null)
   });
   const [editingItem, setEditingItem] = useState(null);  // Store the item being edited
-  const [showRadar, setShowRadar] = useState(false);
+  const [showRadar, setShowRadar] = useState(true);
 
   useEffect(() => {
     if (id) {
@@ -184,11 +184,13 @@ async function fetchRadar() {
 
       <h1 className={styles.title}>Radar: {radarName}</h1>
 
-      <button className={styles.toggleButton} onClick={() => setShowRadar(!showRadar)}>
-        {showRadar ? "Hide Radar" : "Display Radar"}
-      </button>
-
-      {showRadar && <RadarChart items={items} radius={200} />}
+      {showRadar && (
+        <RadarChart
+          items={items}
+          radius={250}
+          defaultTooltip="Mouse over a radar item to get more information!"
+        />
+      )}
 
       <h2 className={styles.sectionHeading}>
         {editingItem ? "Edit Radar Item" : "Add New Radar Item"}
@@ -276,43 +278,42 @@ async function fetchRadar() {
 
       <h2 className={styles.sectionHeading}>Radar Items For</h2>
       <ul className={styles.itemList}>
-        {items.map((item) => (
-          <li className={styles.item} key={item.id}>
-            <div>
-              <strong>{item.name}</strong>: {item.description} - {item.category} |{" "}
-              {item.distance}
-            </div>
-            <select
-              className={styles.selectField}
-              value={item.zoom_in || ""}
-              onChange={(e) => {
-                const updatedItem = { ...item, zoom_in: e.target.value };
-                setEditingItem(updatedItem); // Set item to editing mode
-              }}
-            >
-              <option value="">Select a Radar to Zoom In</option>
-              {radars.map((radar) => (
-                <option key={radar.id} value={radar.id}>
-                  {radar.name}
-                </option>
-              ))}
-            </select>
-            <div className={styles.itemButtons}>
-              <button
-                className={styles.editButton}
-                onClick={() => handleEditClick(item)}
-              >
-                Edit
-              </button>
-              <button
-                className={styles.deleteButton}
-                onClick={() => handleDeleteItem(item.id)}
-              >
-                Delete
-              </button>
-            </div>
-          </li>
-        ))}
+        {items.map((item) => {
+          const zoomInRadar = radars.find((radar) => radar.id === item.zoom_in);
+          return (
+            <li className={styles.item} key={item.id}>
+              <div>
+                <strong>{item.name}</strong>: {item.description} - {item.category} | {item.distance}
+              </div>
+              <div className={styles.zoomButtonWrapper}>
+                <Link href={zoomInRadar ? `/radar/${item.zoom_in}` : "#"}>
+                  <button
+                    className={`${styles.zoomInButton} ${
+                      zoomInRadar ? styles.enabled : styles.disabled
+                    }`}
+                    disabled={!zoomInRadar}
+                  >
+                    {zoomInRadar ? `Zoom in to: ${zoomInRadar.name}` : "No radar to zoom in to"}
+                  </button>
+                </Link>
+              </div>
+              <div className={styles.itemButtons}>
+                <button
+                  className={styles.editButton}
+                  onClick={() => handleEditClick(item)}
+                >
+                  Edit
+                </button>
+                <button
+                  className={styles.deleteButton}
+                  onClick={() => handleDeleteItem(item.id)}
+                >
+                  Delete
+                </button>
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
