@@ -1,14 +1,8 @@
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import supabase from '../lib/supabaseClient';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import styles from './RadarDashboard.module.css'; // Import the CSS module
-
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 export default function RadarDashboard() {
   const [radars, setRadars] = useState([]);
@@ -81,9 +75,9 @@ export default function RadarDashboard() {
   }
 
   // Handle navigation to the strategy page
-  const navigateToStrategy = (radarName) => {
-    const encodedRadarName = encodeURIComponent(radarName);
-    router.push(`/strategy/${encodedRadarName}`);
+  const navigateToStrategy = (radarId) => {
+    console.log('navigateToStrategy for id: ', radarId);
+    router.push(`/strategy/${radarId}`);  // Pass radarId to the URL
   };
 
   return (
@@ -166,7 +160,7 @@ export default function RadarDashboard() {
                         <button className={styles.button} onClick={() => handleDeleteRadar(radar.id, radar.name)}>
                           Delete
                         </button>
-                        <button className={styles.button} onClick={() => navigateToStrategy(radar.name)}>
+                        <button className={styles.button} onClick={() => navigateToStrategy(radar.id)}>
                           Go to Strategy - {radar.name}
                         </button>
                       </div>
