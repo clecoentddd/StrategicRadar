@@ -8,10 +8,58 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+/* Header container to position everything at the top */
+/* Header container to position everything at the top, remove the white bar */
+.headerContainer {
+  display: flex;
+  justify-content: space-between; /* Space out items equally */
+  align-items: center; /* Align vertically */
+  width: 100%;
+  background-color: transparent; /* Remove white background */
+  z-index: 1000;
+  margin-bottom: 20px; /* Optional: Add some spacing between header and content */
+  padding: 20px 0;
+}
+
+/* Back button styling */
+.backButton {
+  padding: 10px 20px;
+  background-color: #0070f3;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.backButton:hover {
+  background-color: #005bb5; /* Darker shade on hover */
+}
+
+/* Title styling for radar name */
 .title {
   font-size: 24px;
-  color: #333;
-  text-align: center;
+  font-weight: 600;
+  margin: 0;
+  text-align: center; /* Center the title text */
+  flex-grow: 1; /* Make the title take up available space */
+}
+
+/* View Strategy button styling */
+.strategyButton {
+  padding: 12px 24px;
+  background-color: #00b894; /* Forward button color */
+  color: white;
+  text-decoration: none;
+  border-radius: 50px;
+  font-size: 16px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin-left: 20px; /* Adjust horizontal spacing */
+}
+
+.strategyButton:hover {
+  background-color: #00a083; /* Slightly darker shade */
+  transform: scale(1.05); /* Slightly enlarge on hover */
 }
 
 .toggleButton,
